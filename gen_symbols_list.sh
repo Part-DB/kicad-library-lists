@@ -39,6 +39,9 @@ for file in $(find "$clone_path" -type f -name "*.kicad_sym"); do
     # This line give us something like: 74xx:74LS574
     symbols=$(echo "$symbols" | sed "s|^|$file:|" | sed "s|$clone_path/||" | sed "s|.kicad_sym||" | sed "s|/|:|" )
 
+    # Sort symbols alphabetically
+    symbols=$(echo "$symbols" | sort)
+
     if [ ! -z "$symbols" ]; then
         echo "$symbols" >> "$output_path"
     fi
