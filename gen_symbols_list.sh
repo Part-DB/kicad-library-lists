@@ -29,7 +29,7 @@ echo "# on $(date)" >> "$output_path"
 for file in $(find "$clone_path" -type f -name "*.kicad_sym"); do
     # Extract the symbol name from the file
     # This line give us something like: '(symbol "74LS574" ('
-    symbols=$(grep -oP "\(symbol \"(\w+)\" \(" $file)
+    symbols=$(grep -oP "\(symbol \"(.+)\" \(" $file)
     
     # Now we just need to extract the part from the quotes for each line
     # This line give us something like: 74LS574
