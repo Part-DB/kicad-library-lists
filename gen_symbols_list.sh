@@ -28,12 +28,15 @@ echo "# on $(date)" >> "$output_path"
 # Iterate over all kicad_sym files and extract the symbol names
 for file in $(find "$clone_path" -type f -name "*.kicad_sym"); do
     # Extract the symbol name from the file
-    # This line give us something like: '(symbol "74LS574" ('
-    symbols=$(grep -oP "\(symbol \"(.+)\" \(" $file)
+    # This line give us something like: '(symbol "74LS574"'
+    symbols=$(grep -oP "\(symbol \"(.+)\"" $file)
     
     # Now we just need to extract the part from the quotes for each line
     # This line give us something like: 74LS574
-    symbols=$(echo "$symbols" | sed "s|(symbol \"||" | sed "s|\" (||")
+    symbols=$(echo "$symbols" | sed "s|(symbol \"||" | sed "s|\"||")
+
+    # Remove all symbols that end with something like _1_2, as these are subunits
+    symbols=$(echo "$symbols" | grep -Pv "_[0-9]+_[0-9]+$")
 
     # Now prepend the filename to the symbol name
     # This line give us something like: 74xx:74LS574
