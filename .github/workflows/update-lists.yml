@@ -1,0 +1,36 @@
+name: Update KiCad Library Lists
+
+on:
+  schedule:
+    # Run every week on Monday at 02:00 UTC
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+jobs:
+  update-lists:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate footprints list
+        run: bash gen_footprints_list.sh
+
+      - name: Generate symbols list
+        run: bash gen_symbols_list.sh
+
+      - name: Commit and push changes
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add footprints.txt symbols.txt
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update KiCad symbols and footprints lists"
+            git push
+          fi
