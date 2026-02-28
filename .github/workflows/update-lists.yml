@@ -23,6 +23,7 @@ jobs:
         run: bash gen_symbols_list.sh
 
       - name: Commit and push changes
+        id: commit
         run: |
           set -e
           git config user.name "github-actions[bot]"
@@ -30,7 +31,63 @@ jobs:
           git add footprints.txt symbols.txt
           if git diff --cached --quiet; then
             echo "No changes to commit"
+            echo "changes_detected=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "Update KiCad symbols and footprints lists"
             git push
+            echo "changes_detected=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update PR in Part-DB-server
+        if: steps.commit.outputs.changes_detected == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PART_DB_SERVER_TOKEN }}
+        run: |
+          set -e
+          BRANCH_NAME="update-kicad-library-lists"
+          TARGET_REPO="Part-DB/Part-DB-server"
+
+          # Fetch the default branch of the target repository
+          DEFAULT_BRANCH=$(gh api "repos/${TARGET_REPO}" --jq '.default_branch')
+
+          # Check for an existing open PR from our branch
+          EXISTING_PR=$(gh pr list --repo "$TARGET_REPO" --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
+
+          # Configure git to use the token via credential helper (avoids token in URLs)
+          gh auth setup-git
+
+          # Clone the target repository
+          gh repo clone "$TARGET_REPO" /tmp/part-db-server
+          cd /tmp/part-db-server
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ -n "$EXISTING_PR" ]; then
+            # Checkout the existing PR branch
+            git checkout "$BRANCH_NAME"
+          else
+            # Create a new branch from the default branch
+            git checkout -b "$BRANCH_NAME"
+          fi
+
+          # Copy the updated files
+          cp "$GITHUB_WORKSPACE/footprints.txt" public/kicad/footprints.txt
+          cp "$GITHUB_WORKSPACE/symbols.txt" public/kicad/symbols.txt
+
+          git add public/kicad/footprints.txt public/kicad/symbols.txt
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit in Part-DB-server"
+          else
+            git commit -m "Update KiCad symbols and footprints lists"
+            git push origin "$BRANCH_NAME"
+
+            if [ -z "$EXISTING_PR" ]; then
+              gh pr create --repo "$TARGET_REPO" \
+                --title "Update KiCad symbols and footprints lists" \
+                --body "Automated update of KiCad library lists from [Part-DB/kicad-library-lists](https://github.com/Part-DB/kicad-library-lists)." \
+                --head "$BRANCH_NAME" \
+                --base "$DEFAULT_BRANCH"
+            fi
           fi
