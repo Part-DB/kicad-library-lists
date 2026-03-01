@@ -16,7 +16,7 @@ else
 fi
 
 # 2. Preparation
-echo "# KiCad Symbol Index" > "$output_path"
+echo "# This file contains all symbols available in the offical KiCAD library" > "$output_path"
 echo "# Generated on $(date)" >> "$output_path"
 
 # Count total directories for the progress indicator
