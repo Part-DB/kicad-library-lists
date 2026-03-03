@@ -81,7 +81,7 @@ jobs:
             echo "No changes to commit in Part-DB-server"
           else
             git commit -m "Update KiCad symbols and footprints lists"
-            git push origin "$BRANCH_NAME"
+            git push --force-with-lease origin "$BRANCH_NAME"
 
             if [ -z "$EXISTING_PR" ]; then
               gh pr create --repo "$TARGET_REPO" \
