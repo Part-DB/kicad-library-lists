@@ -33,9 +33,16 @@ jobs:
             echo "No changes to commit"
             echo "changes_detected=false" >> "$GITHUB_OUTPUT"
           else
-            git commit -m "Update KiCad symbols and footprints lists"
-            git push
-            echo "changes_detected=true" >> "$GITHUB_OUTPUT"
+            # Check for real changes, ignoring comment lines (starting with #)
+            REAL_CHANGES=$(git diff --cached -U0 | grep -E '^[+-]' | grep -vE '^(\+\+\+|---)' | grep -v '^[+-]#' || true)
+            if [ -z "$REAL_CHANGES" ]; then
+              echo "Only comment/date changes detected, skipping commit"
+              echo "changes_detected=false" >> "$GITHUB_OUTPUT"
+            else
+              git commit -m "Update KiCad symbols and footprints lists"
+              git push
+              echo "changes_detected=true" >> "$GITHUB_OUTPUT"
+            fi
           fi
 
       - name: Create or update PR in Part-DB-server
