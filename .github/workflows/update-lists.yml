@@ -87,7 +87,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit in Part-DB-server"
           else
-            git commit -m "Update KiCad symbols and footprints lists"
+            git commit -m "Update KiCad symbols and footprints lists [no ci]"
             git push --force-with-lease origin "$BRANCH_NAME"
 
             if [ -z "$EXISTING_PR" ]; then
